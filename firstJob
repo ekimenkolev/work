@@ -1,0 +1,166 @@
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Collections.Specialized;
+using Microsoft.SqlServer.Management.Smo;
+using Microsoft.SqlServer.Management.Common;
+using System.IO;
+using static Microsoft.SqlServer.Management.Sdk.Sfc.FilterNodeConstant;
+using System.Windows.Forms;
+
+//
+// SQL Server Management Objects (SMO) Programming Guide
+// https://learn.microsoft.com/en-us/sql/relational-databases/server-management-objects-smo/sql-server-management-objects-smo-programming-guide?view=sql-server-ver16&redirectedfrom=MSDN
+// https://www.mssqltips.com/sqlservertip/1826/getting-started-with-sql-server-management-objects-smo/
+// https://www.mssqltips.com/sqlservertip/1833/generate-scripts-for-database-objects-with-smo-for-sql-server/
+//
+namespace SqlScripter
+{
+    /// <summary>
+    /// Программа командной строки для выгрузки текста sql-скриптов для определений
+    /// всех объектов базы данных Microsoft SQL Server.
+    /// 
+    /// Пример вызова: sqlscripter.exe --sqlserver=eso9 --dir=d:\temp
+    /// В каталоге указаном параметром --dir будут созданы подкаталоги
+    /// Tables, Views, Synonyms, ScalarFuctions, TableFunctions (просто Function) в которых
+    /// программа создаст файлы с именем типа ObjectName.sql где ObjectName
+    /// соответствует имени sql объекта.
+    /// </summary>
+    public class Program
+    {
+        static void Main(string[] args)
+        { 
+            if (args.Length < 2 || !args[0].StartsWith("--sqlserver=") || !args[1].StartsWith("--dir="))
+            {
+                Console.WriteLine("Ошибка ввода");
+                Console.WriteLine("Использование: sqlscripter.exe --sqlserver=<server> --dir=<directory>");
+                return;
+            }
+
+            string serverName = args[0].Substring("--sqlserver=".Length);
+            string directory = args[1].Substring("--dir=".Length);
+
+            var server = new Server(serverName);
+            server.ConnectionContext.LoginSecure = true;
+
+            int dataBaseId = 5;
+
+            Database baseComfort = server.Databases.ItemById(dataBaseId);
+
+            object[] collections = new object[]
+            {
+                baseComfort.Tables,
+                baseComfort.Views,
+                baseComfort.Synonyms,
+                baseComfort.UserDefinedFunctions
+            };
+
+            string[] objectTypes = { "Tables", "Views", "Synonyms", "Functions"};
+            foreach (string objectType in objectTypes)
+            {
+                string typeDirectory = Path.Combine(directory, objectType);
+                Directory.CreateDirectory(typeDirectory);
+            }
+
+            List<string> dataIsNotAccessible = new List<string>();
+            if (dataIsNotAccessible.Any())
+            {
+                string messageFilePath = Path.Combine(directory, "message.txt");
+                File.WriteAllLines(messageFilePath, dataIsNotAccessible);
+            }
+
+            List<string> oldFileNames = new List<string>();
+            for (int i = 0; i < objectTypes.Length; i++)
+            {
+                string[] files = Directory.GetFiles(Path.Combine(directory, objectTypes[i]));
+                foreach (string filePath in files)
+                {
+                    FileInfo fileInfo = new FileInfo(filePath);
+                    oldFileNames.Add(Path.Combine(directory, objectTypes[i],fileInfo.Name));
+                }
+            }
+
+            for(int i = 0; i < oldFileNames.Count; i++)
+            {
+                Console.WriteLine(oldFileNames[i]);
+            }
+
+            List<string> newFileNames = new List<string>();
+
+            for (int i = 0; i < collections.Length; i++)
+            {
+                string typeDirectory = Path.Combine(directory, objectTypes[i]);
+                Directory.CreateDirectory(typeDirectory);
+
+                var currentCollection = collections[i];
+                if (currentCollection is TableCollection tableCollection)
+                {
+                    foreach (Table table in tableCollection)
+                    {
+                        string scriptPath = Path.Combine(typeDirectory, table.Name + ".sql");
+                        string script = string.Join(Environment.NewLine, table.Script().Cast<string>().ToArray());
+                        File.WriteAllText(scriptPath, script);
+                        Console.WriteLine($"{objectTypes[i]}: {table.Name}");
+                        newFileNames.Add(Path.Combine(directory, objectTypes[i],table.Name + ".sql"));
+                    }
+                }
+                else if (collections[i] is ViewCollection viewCollection)
+                {
+                    foreach (Microsoft.SqlServer.Management.Smo.View view in viewCollection)
+                    {
+                        string scriptPath = Path.Combine(typeDirectory, view.Name + ".sql");
+                        string script = string.Join(Environment.NewLine, view.Script().Cast<string>().ToArray());
+                        File.WriteAllText(scriptPath, script);
+                        Console.WriteLine($"{objectTypes[i]}: {view.Name}");
+                        newFileNames.Add(Path.Combine(directory, objectTypes[i], view.Name + ".sql"));
+                    }
+                }
+                else if (collections[i] is SynonymCollection synonymCollection)
+                {
+                    foreach (Synonym synonym in synonymCollection)
+                    {
+                        string scriptPath = Path.Combine(typeDirectory, synonym.Name + ".sql");
+                        string script = string.Join(Environment.NewLine, synonym.Script().Cast<string>().ToArray());
+                        File.WriteAllText(scriptPath, script);
+                        Console.WriteLine($"{objectTypes[i]}: {synonym.Name}");
+                        newFileNames.Add(Path.Combine(directory, objectTypes[i], synonym.Name + ".sql"));
+                    }
+                }
+                else if (collections[i] is UserDefinedFunctionCollection functionCollection)
+                {
+                    foreach (UserDefinedFunction function in functionCollection)
+                    {
+                        try
+                        {
+                            Console.WriteLine(function.Name);
+                            string tableScriptPath = Path.Combine(directory, objectTypes[3], function.Name + ".sql");
+
+                            StringCollection tableScriptCollection = function.Script();
+                            string tableScript = string.Join(Environment.NewLine, tableScriptCollection.Cast<string>().ToArray());
+
+                            File.WriteAllText(tableScriptPath, tableScript);
+
+                            newFileNames.Add(Path.Combine(directory, objectTypes[i], function.Name + ".sql"));
+                        }
+                        catch (FailedOperationException ex)
+                        {
+                            Console.WriteLine($"Не удалось получить доступ к функции {function.Name}. Пропускаем. {ex.Message}");
+                            dataIsNotAccessible.Add(function.Name);
+                        }
+                    }
+                }
+            }
+
+            foreach (string fileName in oldFileNames)
+            {
+                if (!newFileNames.Contains(fileName))
+                {
+                    // Если файла нет в новом каталоге, удаляем его из старого каталога
+                    Console.WriteLine($"Удаление файла: {fileName}");
+                    File.Delete(fileName);
+                }
+            }
+        }
+    }
+}
