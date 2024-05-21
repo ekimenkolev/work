@@ -1,0 +1,92 @@
+<UserControl x:Class="Эсо.Режимы.Договоры.Заметки.ОбразОкнаЗаметкиДоговора"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:Эсо.Данные;assembly=Эсо.Данные"
+             mc:Ignorable="d"
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+        <Grid Margin="0,0,0,0">
+            <Grid.Resources>
+                <!-- Стиль для кнопки-ссылки -->
+                <Style TargetType="Button" x:Key="HoverUnderlineStyleButton">
+                    <Setter Property="Cursor" Value="Hand"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <TextBlock x:Name="TextBlock">
+                        <ContentPresenter Content="{TemplateBinding  Content}" ContentTemplate="{TemplateBinding  ContentTemplate}"/>
+                                </TextBlock>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="true">
+                                        <Setter TargetName="TextBlock" Property="TextBlock.TextDecorations" Value="Underline"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Grid.Resources>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Label Content="Заметки договорной группы" Margin="10,0,10,5" Grid.Row="0" Foreground="#4E5754" FontWeight ="Bold"/>
+            <TextBox Text="{Binding ТекстЗаметкиДоговора}" Margin="10,0,10,0" Grid.Row="1" Height="80" IsReadOnly="True"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" Background="#F5F5F5" />
+
+            <Label Content="Заметки расчетной группы" Margin="0,0,0,0" Grid.Row="2" Foreground="#4E5754" FontWeight ="Bold"/>
+            <Button Content="Редактировать" Command="{Binding КомандаРедактироватьПримечание}" 
+                CommandParameter="{x:Static local:ЭсоТипПримечанияДоговора.Расчеты}"
+                Grid.Row="2" Margin="0,5,10,0"
+                Style="{StaticResource HoverUnderlineStyleButton}" HorizontalAlignment="Right" Foreground="#FF5656FD"/>
+            <TextBox Text="{Binding ТекстЗаметкиРасчеты}" Margin="10,0,10,0" Grid.Row="3" Height="80" IsReadOnly="True"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" Background="#F5F5F5" Grid.RowSpan="2"/>
+
+            <Label Content="Заметки бухгалтерии" Margin="10,0,10,0" Grid.Row="4" Foreground="#4E5754" FontWeight ="Bold"/>
+            <Button Content="Редактировать" Command="{Binding КомандаРедактироватьПримечание}" 
+                CommandParameter="{x:Static local:ЭсоТипПримечанияДоговора.Бухгалтерия}"
+                Grid.Row="4" Margin="0,5,10,0"
+                Style="{StaticResource HoverUnderlineStyleButton}" HorizontalAlignment="Right" Foreground="#FF5656FD"/>
+            <TextBox Text="{Binding ТекстЗаметкиБухгалтерия}" Margin="10,0,10,0" Grid.Row="5" Height="80" IsReadOnly="True"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" Background="#F5F5F5"/>
+            <Label Content="Заметки юристов" Margin="10,0,10,0" Grid.Row="6" Foreground="#4E5754" FontWeight ="Bold"/>
+            <Button Content="Редактировать" Command="{Binding КомандаРедактироватьПримечание}" 
+                CommandParameter="{x:Static local:ЭсоТипПримечанияДоговора.Юристы}"
+                Grid.Row="6" Margin="0,5,10,0"
+                Style="{StaticResource HoverUnderlineStyleButton}" HorizontalAlignment="Right" Foreground="#FF5656FD"/>
+            <TextBox Text="{Binding ТекстЗаметкиЮристы}"  Margin="10,0,10,0" Grid.Row="7" Height="80" IsReadOnly="True"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" Background="#F5F5F5"/>
+
+            <Label Content="Заметки технического аудита" Margin="10,0,10,0" Grid.Row="8" Foreground="#4E5754" FontWeight ="Bold"/>
+            <Button Content="Редактировать" Command="{Binding КомандаРедактироватьПримечание}" 
+                CommandParameter="{x:Static local:ЭсоТипПримечанияДоговора.ТехАудит}"
+                Grid.Row="8" Margin="0,5,10,0" 
+                Style="{StaticResource HoverUnderlineStyleButton}" HorizontalAlignment="Right" Foreground="#FF5656FD"/>
+            <TextBox Text="{Binding ТекстЗаметкиТехАудит}" Margin="10,0,10,0" Grid.Row="9" IsReadOnly="True"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" Background="#F5F5F5" Grid.RowSpan="2" Height="80"/>
+            
+            <Label Content="Телефон из договора" Margin="10,0,0,3" Grid.Row="10" Grid.Column="0" Foreground="#4E5754"
+                Background="Transparent" BorderThickness="0" Opacity="0.5" HorizontalAlignment="Left"/>
+            <TextBox Text="{Binding ТелефонИзДоговора}" Margin="155,5,622,-5" Grid.Row="10"  
+                 Background="Transparent" BorderThickness="0" Opacity="0.5" IsReadOnly="True" RenderTransformOrigin="0.5,0.5"  >
+            </TextBox>
+            <Label Content="Мобильный телефон" Margin="400,77,377,3" Grid.Row="10" Foreground="#4E5754" FontWeight ="Bold"
+                Background="Transparent" BorderThickness="0" Opacity="0.5" Grid.RowSpan="2"/>
+            <TextBox Text="{Binding МобильныйТелефон}" Margin="551,0,228,5" Grid.Row="10" IsReadOnly="True" 
+                 Background="Transparent" BorderThickness="0" Opacity="0.5" RenderTransformOrigin="0.5,0.5" Grid.RowSpan="2" />
+        </Grid>
+    </ScrollViewer>
+</UserControl>
